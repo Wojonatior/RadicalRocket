@@ -4,6 +4,8 @@ const TURN_SPEED = 4;
 const SLOWING_FRICTION = 0.9;
 const THRUSTER_POWER = 4;
 const MAX_VEL = 200;
+const NUM_STARS = 20;
+const BACKGROUND_VELOCITY = 2;
 
 let gState = {
   direction: 0, // Measured from 3 o'clock
@@ -12,21 +14,34 @@ let gState = {
   xVel: 0,
   yVel: 0,
   thruster: 'off',
+  stars: [], //{x, y, depth}
 };
 
 function setup() {
   createCanvas(WIDTH, HEIGHT);
   angleMode(DEGREES);
+  gState = generateStarfield(gState);
 }
+
+const generateStarfield = (state) => {
+  for (let depth = 1; depth <= 3; depth++) {
+    for (let i = 0; i < NUM_STARS * depth; i++) {
+      state.stars.push({ x: random(0, 800), y: random(0, 800), depth });
+    }
+  }
+  return state;
+};
 
 function draw() {
   background('black');
+  drawStarfield(gState);
   drawShip(gState);
   gState = handleInput(gState);
   processState(gState);
 }
 
 const drawShip = (state) => {
+  push();
   translate(state.x, state.y);
   rotate(state.direction);
   strokeWeight(1);
@@ -38,6 +53,17 @@ const drawShip = (state) => {
   fill('white');
   stroke('white');
   triangle(40, 0, 0, 10, 0, -10);
+  pop();
+};
+
+const drawStarfield = (state) => {
+  state.stars.map(({ x, y, depth }) => {
+    drawStar(x, y, 5 - depth);
+  });
+};
+
+const drawStar = (x, y, size) => {
+  circle(x, y, size);
 };
 
 const handleInput = (state) => {
