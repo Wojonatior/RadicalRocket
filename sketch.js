@@ -1,16 +1,15 @@
 const WIDTH = 800;
 const HEIGHT = 800;
 const TURN_SPEED = 4;
-const SLOWING_FRICTION = 0.9;
+const SLOWING_FRICTION = 0.99;
 const THRUSTER_POWER = 4;
 const MAX_VEL = 200;
-const NUM_STARS = 20;
-const BACKGROUND_VELOCITY = 2;
+const NUM_STARS = 10;
 
 let gState = {
   direction: 0, // Measured from 3 o'clock
-  x: WIDTH / 2,
-  y: HEIGHT / 2,
+  x: 0,
+  y: 0,
   xVel: 0,
   yVel: 0,
   thruster: 'off',
@@ -24,9 +23,13 @@ function setup() {
 }
 
 const generateStarfield = (state) => {
-  for (let depth = 1; depth <= 3; depth++) {
+  for (let depth = 1; depth <= 6; depth++) {
     for (let i = 0; i < NUM_STARS * depth; i++) {
-      state.stars.push({ x: random(0, 800), y: random(0, 800), depth });
+      state.stars.push({
+        x: random(0, WIDTH * 2),
+        y: random(0, HEIGHT * 2),
+        depth,
+      });
     }
   }
   return state;
@@ -42,7 +45,7 @@ function draw() {
 
 const drawShip = (state) => {
   push();
-  translate(state.x, state.y);
+  translate(WIDTH / 2, HEIGHT / 2);
   rotate(state.direction);
   strokeWeight(1);
   if (state.thruster === 'on') {
@@ -56,9 +59,17 @@ const drawShip = (state) => {
   pop();
 };
 
+Number.prototype.mod = function (n) {
+  return ((this % n) + n) % n;
+};
+
 const drawStarfield = (state) => {
   state.stars.map(({ x, y, depth }) => {
-    drawStar(x, y, 5 - depth);
+    push();
+    const starX = (state.x / depth + x).mod(WIDTH);
+    const starY = (state.y / depth + y).mod(HEIGHT);
+    drawStar(starX, starY, 5 - depth / 2);
+    pop();
   });
 };
 
@@ -88,8 +99,10 @@ const processState = (state) => {
     state.xVel += cos(state.direction) * THRUSTER_POWER;
     state.yVel += sin(state.direction) * THRUSTER_POWER;
   }
-  state.x += state.xVel;
-  state.y += state.yVel;
+
+  // Invert the motion since the stars move, not the ship
+  state.x -= state.xVel;
+  state.y -= state.yVel;
 
   state.xVel *= SLOWING_FRICTION;
   state.yVel *= SLOWING_FRICTION;
