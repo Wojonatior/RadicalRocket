@@ -7,6 +7,7 @@ const MAX_VEL = 200;
 const NUM_STARS = 20;
 const STARFIELD_WIDTH = WIDTH * 2;
 const STARFIELD_HEIGHT = HEIGHT * 2;
+const TEXT_SIZE = 30;
 
 let gState = {
   direction: 0, // Measured from 3 o'clock
@@ -16,6 +17,7 @@ let gState = {
   yVel: 0,
   thruster: 'off',
   stars: [], //{x, y, depth}
+  planets: [{ x: 100, y: 100, size: 30 }],
 };
 
 function setup() {
@@ -42,8 +44,16 @@ function draw() {
   background('black');
   drawStarfield(gState);
   drawShip(gState);
+  drawPlanets(gState);
   gState = handleInput(gState);
   processState(gState);
+  debugValues({
+    x: gState.x,
+    y: gState.y,
+    xVel: gState.xVel,
+    yVel: gState.yVel,
+    planetVisible: isPlanetVisible(gState.planets[0], gState),
+  });
 }
 
 const drawShip = (state) => {
@@ -72,10 +82,10 @@ const drawStarfield = (state) => {
   state.stars.map(({ x, y, depth }) => {
     push();
     const starX =
-      (state.x / depth + x).mod(STARFIELD_WIDTH) - // Constrain to tile size
+      ((0 - state.x) / depth + x).mod(STARFIELD_WIDTH) - // Constrain to tile size
       (STARFIELD_WIDTH - WIDTH) / 2; // Offset to align center of the tile with the center of the viewable area
     const starY =
-      (state.y / depth + y).mod(STARFIELD_HEIGHT) -
+      ((0 - state.y) / depth + y).mod(STARFIELD_HEIGHT) -
       (STARFIELD_HEIGHT - HEIGHT) / 2;
     drawStar(starX, starY, 5 - depth / 2);
     pop();
@@ -86,6 +96,32 @@ const drawStar = (x, y, size) => {
   // Maybe make the stars dim/fade or draw a cross shape instead
   // Play around with different star colors
   circle(x, y, size);
+};
+
+const isPlanetVisible = (planet, state) => {
+  const minBoundX = state.x - WIDTH / 2;
+  const minBoundY = state.y - HEIGHT / 2;
+  const maxBoundX = state.x + WIDTH / 2;
+  const maxBoundY = state.y + HEIGHT / 2;
+  return (
+    planet.x > minBoundX &&
+    planet.x < maxBoundX &&
+    planet.y > minBoundY &&
+    planet.y < maxBoundY
+  );
+};
+
+const drawPlanets = (state) => {
+  state.planets.map(({ x, y, size }) => {
+    push();
+    const planetX = x - state.x + WIDTH / 2;
+    // const planetX = x + state.x + WIDTH / 2;
+    const planetY = y - state.y + HEIGHT / 2;
+    translate(planetX, planetY);
+    fill('green');
+    circle(0, 0, size);
+    pop();
+  });
 };
 
 const handleInput = (state) => {
@@ -114,12 +150,11 @@ const processState = (state) => {
   }
 
   // Invert the motion since the stars move, not the ship
-  state.x -= state.xVel;
-  state.y -= state.yVel;
+  state.x += state.xVel;
+  state.y += state.yVel;
 
   state.xVel *= SLOWING_FRICTION;
   state.yVel *= SLOWING_FRICTION;
-  console.log(state.xVel, state.yVel);
   state.xVel = constrain(state.xVel, -1 * MAX_VEL, MAX_VEL);
   state.yVel = constrain(state.yVel, -1 * MAX_VEL, MAX_VEL);
 };
@@ -127,3 +162,15 @@ const processState = (state) => {
 // Keep a momentum vector
 // The > the delta beweeen momentum and pointed direction
 // the more momentum gets sent laterally?
+
+const debugValues = (values) => {
+  push();
+  textSize(TEXT_SIZE);
+  fill('white');
+  let yCoord = TEXT_SIZE;
+  Object.entries(values).map(([key, value]) => {
+    text(`${key}: ${Math.round(value)}`, 0, yCoord);
+    yCoord += TEXT_SIZE;
+  });
+  pop();
+};
