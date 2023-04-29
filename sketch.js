@@ -42,11 +42,6 @@ const generateStarfield = (state) => {
 
 function draw() {
   background('black');
-  drawStarfield(gState);
-  drawShip(gState);
-  drawPlanets(gState);
-  gState = handleInput(gState);
-  processState(gState);
   debugValues({
     x: gState.x,
     y: gState.y,
@@ -54,6 +49,11 @@ function draw() {
     yVel: gState.yVel,
     planetVisible: isPlanetVisible(gState.planets[0], gState),
   });
+  drawStarfield(gState);
+  drawShip(gState);
+  drawPlanets(gState);
+  gState = handleInput(gState);
+  processState(gState);
 }
 
 const drawShip = (state) => {
